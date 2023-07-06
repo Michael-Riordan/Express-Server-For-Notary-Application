@@ -43,20 +43,36 @@ app.get('/api/distance', async (req, res) => {
     }
 });
 
-app.get('/appointment', (req, res) => {
-    res.send('list of all appointments');
+app.get('/appointments', (req, res) => {
+    const APPOINTMENT_QUERY = "select * from notaryappointmentmanager.appointments"
+    connection.query(APPOINTMENT_QUERY, (err, response) => {
+        if (err) {
+            console.log(err)
+        } else {
+            res.send(response);
+        }
+    })
 })
 
 app.post('/addAppointment', (req, res) => {
-    const ADD_QUERY = `insert into notaryappointmentmanager.appointments (appointment) values ('${req.body.appointment}')`
+    const ADD_QUERY = `insert into notaryappointmentmanager.appointments (appointmentTime, appointmentDate) values ('${req.body.appointmentTime}', '${req.body.appointmentDate}')`
     connection.query(ADD_QUERY, (err) => {
         if (err) {
             console.log(err);
         } else {
-            res.send('appointment has been added');
+            res.send('appointment added');
         }
     })
 })
+
+app.delete('/deleteAppointment/:appointmentId', (req, res) => {
+    const DELETE_QUERY = `DELETE FROM notaryappointmentmanager.appointments where (appointmentId=${req.params.appointmentId})`;
+    connection.query(DELETE_QUERY, (err, res) => {
+        if (err) {
+            console.log(err);
+        }
+    });
+});
 
 
 /* EIA api call if needed in future. (tracks cost of gasoline in PADD 5 region)
