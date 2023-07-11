@@ -3,6 +3,8 @@ const axios = require('axios');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const connection = require('./db');
+const bcrypt = require('bcrypt');
+const { error } = require('console');
 const app = express();
 require('dotenv').config();
 const port = 8000;
@@ -73,6 +75,36 @@ app.delete('/deleteAppointment/:appointmentId', (req, res) => {
         }
     });
 });
+
+app.post('/credentials', (req, res) => {
+    const { username, password } = req.body;
+    const CREDENTIALS_QUERY = `SELECT password FROM notaryappointmentmanager.credentials WHERE username = ?`;
+    const selectParams = [username];
+    connection.query(CREDENTIALS_QUERY, selectParams, (err, results) => {
+        if (err) {
+            console.error('Error querying the database:', error);
+            return res.status(500).json({error: 'Internal server error'});
+        }
+
+        if (results.length === 0) {
+            return res.status(401).json({error: 'Invalid credentials'});
+        }
+
+        const storedHashedPassword = results[0].password;
+        bcrypt.compare(password, storedHashedPassword, (compareError, isMatch) => {
+            if (compareError) {
+                console.error('Error comparing passwords:', compareError);
+                return res.status(500).json({ error: 'Internal Server Error'});
+            }
+
+            if (!isMatch) {
+                return res.status(401).json({error: 'Invalid Credentials'});
+            }
+
+            return res.status(200).json({ message: 'Login Successful' });
+        })
+    })
+})
 
 
 /* EIA api call if needed in future. (tracks cost of gasoline in PADD 5 region)
