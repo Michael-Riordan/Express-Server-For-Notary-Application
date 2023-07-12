@@ -6,8 +6,11 @@ const connection = require('./db');
 const bcrypt = require('bcrypt');
 const { error } = require('console');
 const app = express();
+const path = require('path');
 require('dotenv').config();
 const port = 8000;
+const jsonFilePath = path.join(__dirname, 'business-hours.json');
+app.use(express.static(path.dirname(jsonFilePath)));
 
 
 function logger(req, res, next) { 
@@ -20,6 +23,7 @@ app.use(logger);
 app.use(cors());
 
 app.use(bodyParser.json());
+
 
 app.get('/api/places', async (req, res) => {
     const apiKey = process.env.PLACES_API_KEY;
@@ -103,8 +107,13 @@ app.post('/credentials', (req, res) => {
 
             return res.status(200).json({ message: 'Login Successful' });
         })
-    })
+    });
+});
+
+app.get('/api/business-hours', (req, res) => {
+    res.sendFile(jsonFilePath);
 })
+
 
 
 /* EIA api call if needed in future. (tracks cost of gasoline in PADD 5 region)
