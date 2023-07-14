@@ -7,6 +7,8 @@ const bcrypt = require('bcrypt');
 const { error } = require('console');
 const app = express();
 const path = require('path');
+const fs = require('fs');
+const { isUtf8 } = require('buffer');
 require('dotenv').config();
 const port = 8000;
 const jsonFilePath = path.join(__dirname, 'business-hours.json');
@@ -111,6 +113,34 @@ app.post('/credentials', (req, res) => {
 });
 
 app.get('/api/business-hours', (req, res) => {
+    res.sendFile(jsonFilePath);
+})
+
+app.post('/update-hours', (req, res) => {
+    const jsonHours = fs.readFileSync('./business-hours.json', 'utf8');
+    const jsonArray = JSON.parse(jsonHours);
+    const {day, time} = req.body;
+
+    const targetObject = jsonArray.find(obj => obj.hasOwnProperty(day));
+
+    targetObject[day].push(time);
+    fs.writeFileSync('./business-hours.json', JSON.stringify(jsonArray));
+
+    res.sendFile(jsonFilePath);
+})
+
+app.post('/delete-hours', (req, res) => {
+    const jsonHours = fs.readFileSync('./business-hours.json', 'utf8');
+    const jsonArray = JSON.parse(jsonHours);
+
+    const {day, time} = req.body;
+
+    const targetObject = jsonArray.find(obj => obj.hasOwnProperty(day));
+
+    targetObject[day] = targetObject[day].filter(hour => hour !== time);
+
+    fs.writeFileSync('./business-hours.json', JSON.stringify(jsonArray));
+
     res.sendFile(jsonFilePath);
 })
 
