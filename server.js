@@ -11,8 +11,10 @@ const fs = require('fs');
 const { isUtf8 } = require('buffer');
 require('dotenv').config();
 const port = 8000;
-const jsonFilePath = path.join(__dirname, 'business-hours.json');
-app.use(express.static(path.dirname(jsonFilePath)));
+const businessHoursFilePath = path.join(__dirname, 'business-hours.json');
+const blockedDatesFilePath = path.join(__dirname, 'blocked-dates.json');
+app.use(express.static(path.dirname(businessHoursFilePath)));
+app.use(express.static(path.dirname(blockedDatesFilePath)));
 
 
 function logger(req, res, next) { 
@@ -113,7 +115,11 @@ app.post('/credentials', (req, res) => {
 });
 
 app.get('/api/business-hours', (req, res) => {
-    res.sendFile(jsonFilePath);
+    res.sendFile(businessHoursFilePath);
+})
+
+app.get('/api/blocked-dates', (req, res) => {
+    res.sendFile(blockedDatesFilePath);
 })
 
 app.post('/update-hours', (req, res) => {
@@ -126,7 +132,7 @@ app.post('/update-hours', (req, res) => {
     targetObject[day].push(time);
     fs.writeFileSync('./business-hours.json', JSON.stringify(jsonArray));
 
-    res.sendFile(jsonFilePath);
+    res.sendFile(businessHoursFilePath);
 })
 
 app.post('/delete-hours', (req, res) => {
@@ -141,7 +147,7 @@ app.post('/delete-hours', (req, res) => {
 
     fs.writeFileSync('./business-hours.json', JSON.stringify(jsonArray));
 
-    res.sendFile(jsonFilePath);
+    res.sendFile(businessHoursFilePath);
 })
 
 
