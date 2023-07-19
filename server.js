@@ -158,7 +158,7 @@ app.post('/updateBlockedDates', (req, res) => {
     datesArray[0].Blocked = datesArray[0].Blocked.concat(blockedDates);
     fs.writeFileSync('./blocked-dates.json', JSON.stringify(datesArray));
 
-    res.send(blockedDatesFilePath);
+    res.sendFile(blockedDatesFilePath);
 })
 
 
