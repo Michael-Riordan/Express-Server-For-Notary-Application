@@ -161,6 +161,16 @@ app.post('/updateBlockedDates', (req, res) => {
     res.sendFile(blockedDatesFilePath);
 })
 
+app.post('/deleteSelectedDates', (req, res) => {
+    const { blockedDates } = req.body;
+    const jsonDates = fs.readFileSync('./blocked-dates.json');
+    const datesArray = JSON.parse(jsonDates);
+
+    datesArray[0].Blocked = datesArray[0].Blocked.filter(date => !blockedDates.includes(date));
+    fs.writeFileSync('./blocked-dates.json', JSON.stringify(datesArray));
+
+    res.sendFile(blockedDatesFilePath);
+})
 
 
 /* EIA api call if needed in future. (tracks cost of gasoline in PADD 5 region)
