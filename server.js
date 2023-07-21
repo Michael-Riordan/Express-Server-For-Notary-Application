@@ -79,7 +79,9 @@ app.delete('/deleteAppointment/:appointmentId', (req, res) => {
     const DELETE_QUERY = `DELETE FROM notaryappointmentmanager.appointments where (appointmentId=${req.params.appointmentId})`;
     connection.query(DELETE_QUERY, (err, res) => {
         if (err) {
-            console.log(err);
+            console.log(req.params.appointmentId);
+        } else {
+            console.log(res);
         }
     });
 });
