@@ -13,8 +13,12 @@ require('dotenv').config();
 const port = 8000;
 const businessHoursFilePath = path.join(__dirname, 'business-hours.json');
 const blockedDatesFilePath = path.join(__dirname, 'blocked-dates.json');
+const blockedTimesFilePath = path.join(__dirname, 'blocked-times-and-date.json')
+const pendingAppointmentsFilePath = path.join(__dirname, 'pending-appointments.json');
 app.use(express.static(path.dirname(businessHoursFilePath)));
 app.use(express.static(path.dirname(blockedDatesFilePath)));
+app.use(express.static(path.dirname(blockedTimesFilePath)));
+app.use(express.static(path.dirname(pendingAppointmentsFilePath)));
 
 
 function logger(req, res, next) { 
@@ -124,6 +128,14 @@ app.get('/api/blocked-dates', (req, res) => {
     res.sendFile(blockedDatesFilePath);
 })
 
+app.get('/api/blocked-time-for-date', (req, res) => {
+    res.sendFile(blockedTimesFilePath);
+})
+
+app.get('/api/pending-appointments', (req, res) => {
+    res.sendFile(pendingAppointmentsFilePath);
+})
+
 app.post('/update-hours', (req, res) => {
     const jsonHours = fs.readFileSync('./business-hours.json', 'utf8');
     const jsonArray = JSON.parse(jsonHours);
@@ -174,6 +186,48 @@ app.post('/deleteSelectedDates', (req, res) => {
     res.sendFile(blockedDatesFilePath);
 })
 
+app.post('/updateBlockedTime', (req, res) => {
+    const jsonTimes = fs.readFileSync('./blocked-times-and-date.json', 'utf8');
+    const jsonTimesArray = JSON.parse(jsonTimes);
+
+    jsonTimesArray.push(req.body)
+    fs.writeFileSync('./blocked-times-and-date.json', JSON.stringify(jsonTimesArray));
+
+    res.sendFile(blockedTimesFilePath);
+})
+
+app.post('/deleteBlockedTime', (req, res) => {
+    const { date, time, buffer } = req.body;
+    const jsonTimes = fs.readFileSync('./blocked-times-and-date.json', 'utf8');
+    let jsonTimesArray = JSON.parse(jsonTimes);
+    
+    jsonTimesArray = jsonTimesArray.filter(obj => !(obj.date === date && obj.time === time && obj.buffer === buffer));
+
+    fs.writeFileSync('./blocked-times-and-date.json', JSON.stringify(jsonTimesArray));
+
+    res.sendFile(blockedTimesFilePath);   
+})
+
+app.post('/updatePendingAppointments', (req, res) => {
+    const jsonAppointments = fs.readFileSync('./pending-appointments.json', 'utf8');
+    const jsonAppointmentsArray = JSON.parse(jsonAppointments);
+
+    jsonAppointmentsArray.push(req.body);
+    fs.writeFileSync('./pending-appointments.json', JSON.stringify(jsonAppointmentsArray));
+})
+
+app.post('/removePendingAppointment', (req, res) => {
+    const { name, appointment, appointmentId} = req.body;
+    console.log(req.body);
+    const jsonAppointments = fs.readFileSync('./pending-appointments.json', 'utf8');
+    let jsonAppointmentsArray = JSON.parse(jsonAppointments);
+
+    jsonAppointmentsArray = jsonAppointmentsArray.filter(obj => !(obj.name === name && obj.appointment === appointment && obj.appointmentId === appointmentId));
+
+    /*fs.writeFileSync('./pending-appointments.json', JSON.stringify(jsonAppointmentsArray));
+
+    res.sendFile(pendingAppointmentsFilePath);*/
+})
 
 /* EIA api call if needed in future. (tracks cost of gasoline in PADD 5 region)
 app.get('/api/eia', async (req, res) => {
