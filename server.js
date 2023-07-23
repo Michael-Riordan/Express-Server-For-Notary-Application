@@ -90,6 +90,27 @@ app.delete('/deleteAppointment/:appointmentId', (req, res) => {
     });
 });
 
+app.put('/updateAppointment/:appointmentId', (req, res) => {
+    const appointmentId = req.params.appointmentId;
+    const newStatus = req.body.status;
+
+    const updateQuery = 'UPDATE appointments SET status = ? WHERE appointmentid = ?';
+
+    connection.query(updateQuery, [newStatus, appointmentId], (err, results) => {
+        if (err) {
+            console.error('Error updating appointment status:', err);
+            res.status(500).json({message: 'An error occurred while updating the appointment status.'})
+            return;
+        }
+
+        if (results.affectedRows === 0) {
+            res.status(404).json({message: 'Appointment not found or no changes made'});
+        } else {
+            res.status(200).json({message: 'Appointment status updated successfully.'})
+        }
+    });
+});
+
 app.post('/credentials', (req, res) => {
     const { username, password } = req.body;
     const CREDENTIALS_QUERY = `SELECT password FROM notaryappointmentmanager.credentials WHERE username = ?`;
@@ -212,22 +233,32 @@ app.post('/updatePendingAppointments', (req, res) => {
     const jsonAppointments = fs.readFileSync('./pending-appointments.json', 'utf8');
     const jsonAppointmentsArray = JSON.parse(jsonAppointments);
 
-    jsonAppointmentsArray.push(req.body);
-    fs.writeFileSync('./pending-appointments.json', JSON.stringify(jsonAppointmentsArray));
+    const existingAppointment = jsonAppointmentsArray.find((appointment) => {
+        appointment.appointmentId === req.body.appointmentId
+    });
+
+    if (existingAppointment) {
+        console.log('exists');
+        return;
+    } else {
+        jsonAppointmentsArray.push(req.body);
+        fs.writeFileSync('./pending-appointments.json', JSON.stringify(jsonAppointmentsArray));
+    }
+
+    res.send('Appointment Updated');
 })
 
 app.post('/removePendingAppointment', (req, res) => {
     const { name, appointment, appointmentId} = req.body;
-    console.log(req.body);
     const jsonAppointments = fs.readFileSync('./pending-appointments.json', 'utf8');
     let jsonAppointmentsArray = JSON.parse(jsonAppointments);
 
-    jsonAppointmentsArray = jsonAppointmentsArray.filter(obj => !(obj.name === name && obj.appointment === appointment && obj.appointmentId === appointmentId));
+    jsonAppointmentsArray = jsonAppointmentsArray.filter(obj => !(obj.appointmentId === appointmentId));
 
-    /*fs.writeFileSync('./pending-appointments.json', JSON.stringify(jsonAppointmentsArray));
+    fs.writeFileSync('./pending-appointments.json', JSON.stringify(jsonAppointmentsArray));
 
-    res.sendFile(pendingAppointmentsFilePath);*/
-})
+    res.sendFile(pendingAppointmentsFilePath);
+});
 
 /* EIA api call if needed in future. (tracks cost of gasoline in PADD 5 region)
 app.get('/api/eia', async (req, res) => {
