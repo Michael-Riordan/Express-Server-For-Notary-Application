@@ -32,7 +32,6 @@ app.use(cors());
 
 app.use(bodyParser.json());
 
-
 app.get('/api/places', async (req, res) => {
     const apiKey = process.env.PLACES_API_KEY;
     try {
