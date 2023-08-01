@@ -10,7 +10,7 @@ const path = require('path');
 const fs = require('fs');
 const { isUtf8 } = require('buffer');
 require('dotenv').config();
-const PORT = process.env.PORT || 8000;
+const port = 8000;
 const businessHoursFilePath = path.join(__dirname, 'business-hours.json');
 const blockedDatesFilePath = path.join(__dirname, 'blocked-dates.json');
 const blockedTimesFilePath = path.join(__dirname, 'blocked-times-and-date.json')
@@ -271,7 +271,7 @@ app.get('/api/eia', async (req, res) => {
     }
 });*/
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`)
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`)
 });
 
