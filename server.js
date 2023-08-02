@@ -13,12 +13,6 @@ require('dotenv').config();
 const {S3Client, PutObjectCommand, GetObjectCommand} = require('@aws-sdk/client-s3');
 const PORT = process.env.PORT || 8000;
 
-AWS.config.update({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY,
-    region: process.env.S3_BUCKET_REGION,
-});
-
 const s3Client = new S3Client({
     region: process.env.S3_BUCKET_REGION,
     credentials: {
