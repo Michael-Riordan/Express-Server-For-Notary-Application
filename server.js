@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 8000;
 const s3Client = new S3Client({
     region: process.env.S3_BUCKET_REGION,
     credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        accessKeyId: process.env.ACCESS_KEY_ID,
         secretAccessKey: process.env.SECRET_ACCESS_KEY,
     },
 });
