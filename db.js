@@ -1,4 +1,4 @@
-const mysql = require('mysql2');
+/*const mysql = require('mysql2');
 require('dotenv').config();
 
 const connection = mysql.createConnection({
@@ -8,4 +8,4 @@ const connection = mysql.createConnection({
     database: 'notaryappointmentmanager',
 });
 
-module.exports = connection;
+module.exports = connection;*/
