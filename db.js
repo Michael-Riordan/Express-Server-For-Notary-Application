@@ -1,11 +1,12 @@
-/*const mysql = require('mysql2');
+const mysql = require('mysql2');
 require('dotenv').config();
 
-const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
+const connectionPool = mysql.createPool({
+    connectionLimit: 5,
+    host: `${process.env.PROXIMO_URL}`,
+    user: `${process.env.RDS_USERNAME}`,
     password: `${process.env.MYSQL_PASSWORD}`,
     database: 'notaryappointmentmanager',
 });
 
-module.exports = connection;*/
+module.exports = connectionPool;

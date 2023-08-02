@@ -2,7 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const connection = require('./db');
+const connectionPool = require('./db');
 const bcrypt = require('bcrypt');
 const { error } = require('console');
 const app = express();
@@ -93,10 +93,9 @@ app.get('/api/distance', async (req, res) => {
     }
 });
 
-/*
 app.get('/appointments', (req, res) => {
     const APPOINTMENT_QUERY = "select * from notaryappointmentmanager.appointments"
-    connection.query(APPOINTMENT_QUERY, (err, response) => {
+    connectionPool.query(APPOINTMENT_QUERY, (err, response) => {
         if (err) {
             console.log(err)
         } else {
@@ -107,7 +106,7 @@ app.get('/appointments', (req, res) => {
 
 app.post('/addAppointment', (req, res) => {
     const ADD_QUERY = `insert into notaryappointmentmanager.appointments (appointmentTime, appointmentDate) values ('${req.body.appointmentTime}', '${req.body.appointmentDate}')`
-    connection.query(ADD_QUERY, (err) => {
+    connectionPool.query(ADD_QUERY, (err) => {
         if (err) {
             console.log(err);
         } else {
@@ -118,7 +117,7 @@ app.post('/addAppointment', (req, res) => {
 
 app.delete('/deleteAppointment/:appointmentId', (req, res) => {
     const DELETE_QUERY = `DELETE FROM notaryappointmentmanager.appointments where (appointmentId=${req.params.appointmentId})`;
-    connection.query(DELETE_QUERY, (err, res) => {
+    connectionPool.query(DELETE_QUERY, (err, res) => {
         if (err) {
             console.log(req.params.appointmentId);
         } else {
@@ -133,7 +132,7 @@ app.put('/updateAppointment/:appointmentId', (req, res) => {
 
     const updateQuery = 'UPDATE appointments SET status = ? WHERE appointmentid = ?';
 
-    connection.query(updateQuery, [newStatus, appointmentId], (err, results) => {
+    connectionPool.query(updateQuery, [newStatus, appointmentId], (err, results) => {
         if (err) {
             console.error('Error updating appointment status:', err);
             res.status(500).json({message: 'An error occurred while updating the appointment status.'})
@@ -152,9 +151,9 @@ app.post('/credentials', (req, res) => {
     const { username, password } = req.body;
     const CREDENTIALS_QUERY = `SELECT password FROM notaryappointmentmanager.credentials WHERE username = ?`;
     const selectParams = [username];
-    connection.query(CREDENTIALS_QUERY, selectParams, (err, results) => {
+    connectionPool.query(CREDENTIALS_QUERY, selectParams, (err, results) => {
         if (err) {
-            console.error('Error querying the database:', error);
+            console.error('Error querying the database:', err);
             return res.status(500).json({error: 'Internal server error'});
         }
 
@@ -177,8 +176,6 @@ app.post('/credentials', (req, res) => {
         })
     });
 });
-
-*/
 
 app.get('/api/business-hours', (req, res) => {
     const bucketName = process.env.S3_BUCKET_NAME;
