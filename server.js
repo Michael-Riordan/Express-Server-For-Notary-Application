@@ -29,7 +29,6 @@ async function getFileFromS3(bucketName, key) {
 
     try {
         const data = await s3Client.send(new GetObjectCommand(params));
-        console.log(data);
         console.log(data.Body);
         const fileContent = data.Body.toString('utf-8');
         return JSON.parse(fileContent)
