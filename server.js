@@ -10,15 +10,43 @@ const path = require('path');
 const fs = require('fs');
 const { isUtf8 } = require('buffer');
 require('dotenv').config();
+const AWS = require('aws-sdk');
 const PORT = process.env.PORT || 8000;
-const businessHoursFilePath = path.join(__dirname, 'business-hours.json');
-const blockedDatesFilePath = path.join(__dirname, 'blocked-dates.json');
-const blockedTimesFilePath = path.join(__dirname, 'blocked-times-and-date.json')
-const pendingAppointmentsFilePath = path.join(__dirname, 'pending-appointments.json');
-app.use(express.static(path.dirname(businessHoursFilePath)));
-app.use(express.static(path.dirname(blockedDatesFilePath)));
-app.use(express.static(path.dirname(blockedTimesFilePath)));
-app.use(express.static(path.dirname(pendingAppointmentsFilePath)));
+
+AWS.config.update({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.SECRET_ACCESS_KEY,
+    region: process.env.S3_BUCKET_REGION,
+});
+
+const s3 = new AWS.S3();
+
+function getFileFromS3(bucketName, key) {
+    const params = {
+        Bucket: bucketName,
+        Key: key,
+    };
+
+    return new Promise((resolve, reject) => {
+        s3.getObject(params, (err, data) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(data.Body);
+            }
+        });
+    });
+}
+
+async function getJsonFromFile() {
+    try {
+        const data = await getFileFromS3(bucketName, objectKey);
+        return JSON.parse(data.toString());
+    } catch (err) {
+        console.error('Error fetching JSON file from S3:', err);
+        throw err;
+    }
+};
 
 
 function logger(req, res, next) { 
@@ -56,6 +84,7 @@ app.get('/api/distance', async (req, res) => {
     }
 });
 
+/*
 app.get('/appointments', (req, res) => {
     const APPOINTMENT_QUERY = "select * from notaryappointmentmanager.appointments"
     connection.query(APPOINTMENT_QUERY, (err, response) => {
@@ -140,124 +169,265 @@ app.post('/credentials', (req, res) => {
     });
 });
 
+*/
+
 app.get('/api/business-hours', (req, res) => {
-    res.sendFile(businessHoursFilePath);
+    const bucketName = process.env.S3_BUCKET_NAME;
+    const businessHoursFilePath = process.env.BUSINESS_HOURS_FILE_PATH;
+
+    getFileFromS3(bucketName, businessHoursFilePath)
+        .then((fileContent) => {
+            res.set('Content-Type', 'application/json');
+            res.send(fileContent);
+        })
+        .catch((err) => {
+            console.error('Error fetching business hours from S3:', err);
+            res.status(500).json({ error: 'Failed to fetch business hours' });
+        });
 })
 
 app.get('/api/blocked-dates', (req, res) => {
-    res.sendFile(blockedDatesFilePath);
+    const bucketName = process.env.S3_BUCKET_NAME;
+    const blockedDatesFilePath = process.env.BLOCKED_DATES_FILE_PATH;
+
+    getFileFromS3(bucketName, blockedDatesFilePath)
+        .then((fileContent) => {
+            res.set('Content-Type', 'application/json');
+            res.send(fileContent);
+        })
+        .catch((err) => {
+            console.error('Error fetching blocked dates from S3:', err);
+            res.status(500).json({ error: 'Failed to fetch blocked dates' });
+        });
 })
 
 app.get('/api/blocked-time-for-date', (req, res) => {
-    res.sendFile(blockedTimesFilePath);
+    const bucketName = process.env.S3_BUCKET_NAME;
+    const blockedTimesFilePath = process.env.BLOCKED_TIMES_FILE_PATH;
+
+    getFileFromS3(bucketName, blockedTimesFilePath)
+        .then((fileContent) => {
+            res.set('Content-Type', 'application/json');
+            res.send(fileContent);
+        })
+        .catch((err) => {
+            console.error('Error fetching blocked times from S3:', err);
+            res.status(500).json({ error: 'Failed to fetch blocked times' });
+        });
 })
 
 app.get('/api/pending-appointments', (req, res) => {
-    res.sendFile(pendingAppointmentsFilePath);
+    const bucketName = process.env.S3_BUCKET_NAME;
+    const pendingAppointmentsFilePath = process.env.PENDING_APPOINTMENTS_FILE_PATH;
+
+    getFileFromS3(bucketName, pendingAppointmentsFilePath)
+        .then((fileContent) => {
+            res.set('Content-Type', 'application/json');
+            res.send(fileContent);
+        })
+        .catch((err) => {
+            console.error('Error fetching pending-appointments from S3:', err);
+            res.status(500).json({ error: 'Failed to fetch pending appointments' });
+        });
 })
 
-app.post('/update-hours', (req, res) => {
-    const jsonHours = fs.readFileSync('./business-hours.json', 'utf8');
-    const jsonArray = JSON.parse(jsonHours);
-    const {day, time} = req.body;
+app.post('/update-hours', async (req, res) => {
+    try {
+        const jsonArray = await getJsonFromFile();
 
-    const targetObject = jsonArray.find(obj => obj.hasOwnProperty(day));
+        const {day, time} = req.body;
 
-    targetObject[day].push(time);
-    fs.writeFileSync('./business-hours.json', JSON.stringify(jsonArray));
+        const targetObject = jsonArray.find((obj) => obj.hasOwnProperty(day));
 
-    res.sendFile(businessHoursFilePath);
-})
+        targetObject[day].push(time);
 
-app.post('/delete-hours', (req, res) => {
-    const jsonHours = fs.readFileSync('./business-hours.json', 'utf8');
-    const jsonArray = JSON.parse(jsonHours);
+        const uploadParams = {
+            Bucket: process.env.S3_BUCKET_NAME,
+            Key: process.env.BUSINESS_HOURS_FILE_PATH,
+            Body: JSON.stringify(jsonArray),
+        }
 
-    const {day, time} = req.body;
+        await s3.upload(uploadParams).promise();
 
-    const targetObject = jsonArray.find(obj => obj.hasOwnProperty(day));
-
-    targetObject[day] = targetObject[day].filter(hour => hour !== time);
-
-    fs.writeFileSync('./business-hours.json', JSON.stringify(jsonArray));
-
-    res.sendFile(businessHoursFilePath);
-})
-
-app.post('/updateBlockedDates', (req, res) => {
-    const { blockedDates } = req.body;
-    const jsonDates = fs.readFileSync('./blocked-dates.json');
-    const datesArray = JSON.parse(jsonDates);
-
-    datesArray[0].Blocked = datesArray[0].Blocked.concat(blockedDates);
-    fs.writeFileSync('./blocked-dates.json', JSON.stringify(datesArray));
-
-    res.sendFile(blockedDatesFilePath);
-})
-
-app.post('/deleteSelectedDates', (req, res) => {
-    const { blockedDates } = req.body;
-    const jsonDates = fs.readFileSync('./blocked-dates.json');
-    const datesArray = JSON.parse(jsonDates);
-
-    datesArray[0].Blocked = datesArray[0].Blocked.filter(date => !blockedDates.includes(date));
-    fs.writeFileSync('./blocked-dates.json', JSON.stringify(datesArray));
-
-    res.sendFile(blockedDatesFilePath);
-})
-
-app.post('/updateBlockedTime', (req, res) => {
-    const jsonTimes = fs.readFileSync('./blocked-times-and-date.json', 'utf8');
-    const jsonTimesArray = JSON.parse(jsonTimes);
-
-    jsonTimesArray.push(req.body)
-    fs.writeFileSync('./blocked-times-and-date.json', JSON.stringify(jsonTimesArray));
-
-    res.sendFile(blockedTimesFilePath);
-})
-
-app.post('/deleteBlockedTime', (req, res) => {
-    const { date, time, buffer } = req.body;
-    const jsonTimes = fs.readFileSync('./blocked-times-and-date.json', 'utf8');
-    let jsonTimesArray = JSON.parse(jsonTimes);
-    
-    jsonTimesArray = jsonTimesArray.filter(obj => !(obj.date === date && obj.time === time && obj.buffer === buffer));
-
-    fs.writeFileSync('./blocked-times-and-date.json', JSON.stringify(jsonTimesArray));
-
-    res.sendFile(blockedTimesFilePath);   
-})
-
-app.post('/updatePendingAppointments', (req, res) => {
-    const jsonAppointments = fs.readFileSync('./pending-appointments.json', 'utf8');
-    const jsonAppointmentsArray = JSON.parse(jsonAppointments);
-
-    const existingAppointment = jsonAppointmentsArray.find((appointment) => {
-        appointment.appointmentId === req.body.appointmentId
-    });
-
-    if (existingAppointment) {
-        console.log('exists');
-        return;
-    } else {
-        jsonAppointmentsArray.push(req.body);
-        fs.writeFileSync('./pending-appointments.json', JSON.stringify(jsonAppointmentsArray));
+        res.json({message: 'Business hours updated successfully'});
+    } catch (err) {
+        console.error('Error updating business hours:', err);
+        res.status(500).json({error: 'Error updating business hours.'})
     }
+});
 
-    res.send('Appointment Updated');
+app.post('/delete-hours', async (req, res) => {
+    try {
+        const jsonArray = getJsonFromFile();
+
+        const {day, time} = req.body;
+
+        const targetObject = jsonArray.find((obj) => obj.hasOwnProperty(day));
+
+        targetObject[day] = targetObject[day].filter((hour) => hour !== time);
+
+        const uploadParams = {
+            Bucket: process.env.S3_BUCKET_NAME,
+            Key: process.env.BUSINESS_HOURS_FILE_PATH,
+            Body: JSON.stringify(jsonArray),
+        }
+
+        await s3.upload(uploadParams).promise();
+
+        res.json( {message: 'Business hours updated successfully.'} );
+    } catch (err) {
+        console.error('Error updating business hours:', err);
+        res.status(500).json({error: 'Error updating business hours.'});
+    };
 })
 
-app.post('/removePendingAppointment', (req, res) => {
-    const { name, appointment, appointmentId} = req.body;
-    const jsonAppointments = fs.readFileSync('./pending-appointments.json', 'utf8');
-    let jsonAppointmentsArray = JSON.parse(jsonAppointments);
-
-    jsonAppointmentsArray = jsonAppointmentsArray.filter(obj => !(obj.appointmentId === appointmentId));
-
-    fs.writeFileSync('./pending-appointments.json', JSON.stringify(jsonAppointmentsArray));
-
-    res.sendFile(pendingAppointmentsFilePath);
+app.post('/updateBlockedDates', async (req, res) => {
+    try {
+      const { blockedDates } = req.body;
+      const datesArray = await getJsonFromFile();
+  
+      datesArray[0].Blocked = datesArray[0].Blocked.concat(blockedDates);
+  
+      const uploadParams = {
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: process.env.BLOCKED_DATES_FILE_PATH,
+        Body: JSON.stringify(datesArray),
+      };
+  
+      await s3.upload(uploadParams).promise();
+  
+      res.json({ message: 'Blocked dates updated successfully.' });
+    } catch (err) {
+      console.error('Error updating blocked dates:', err);
+      res.status(500).json({ error: 'Error updating blocked dates.' });
+    }
 });
+
+app.post('/deleteSelectedDates', async (req, res) => {
+    try {
+      const { blockedDates } = req.body;
+      const datesArray = await getJsonFromFile();
+  
+      datesArray[0].Blocked = datesArray[0].Blocked.filter(date => !blockedDates.includes(date));
+  
+      // Upload the modified JSON file back to the S3 bucket
+      const uploadParams = {
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: process.env.BLOCKED_DATES_FILE_PATH,
+        Body: JSON.stringify(datesArray),
+      };
+  
+      await s3.upload(uploadParams).promise();
+  
+      res.json({ message: 'Selected dates deleted successfully.' });
+    } catch (err) {
+      console.error('Error deleting selected dates:', err);
+      res.status(500).json({ error: 'Error deleting selected dates.' });
+    }
+});
+
+app.post('/updateBlockedTime', async (req, res) => {
+    try {
+        const jsonTimesArray = await getJsonFromFile();
+    
+        jsonTimesArray.push(req.body);
+    
+        // Upload the modified JSON file back to the S3 bucket
+        const uploadParams = {
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: process.env.BLOCKED_TIMES_FILE_PATH,
+          Body: JSON.stringify(jsonTimesArray),
+        };
+    
+        await s3.upload(uploadParams).promise();
+        res.json({ message: 'Blocked times and date updated successfully.' });
+    } catch (err) {
+        console.error('Error updating blocked times for date:', err);
+        res.status(500).json({ error: 'Error updating blocked times for date.'})
+    }
+});
+
+app.post('/deleteBlockedTime', async (req, res) => {
+    try {
+      const { date, time, buffer } = req.body;
+      let jsonTimesArray = await getJsonFromFile();
+  
+      jsonTimesArray = jsonTimesArray.filter(obj => !(obj.date === date && obj.time === time && obj.buffer === buffer));
+  
+      // Upload the modified JSON file back to the S3 bucket
+      const uploadParams = {
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: process.env.BLOCKED_TIMES_FILE_PATH,
+        Body: JSON.stringify(jsonTimesArray),
+      };
+  
+      await s3.upload(uploadParams).promise();
+  
+      res.json({ message: 'Blocked time deleted successfully.' });
+    } catch (err) {
+      console.error('Error deleting blocked time:', err);
+      res.status(500).json({ error: 'Error deleting blocked time.' });
+    }
+});
+  
+
+app.post('/updatePendingAppointments', async (req, res) => {
+    try {
+      const jsonAppointmentsArray = await getJsonFromFile();
+  
+      const existingAppointment = jsonAppointmentsArray.find(
+        (appointment) => appointment.appointmentId === req.body.appointmentId
+      );
+  
+      if (existingAppointment) {
+        console.log('exists');
+        // Do something if the appointment already exists
+        return res.json({ message: 'Appointment already exists.' });
+      } else {
+        jsonAppointmentsArray.push(req.body);
+  
+        // Upload the modified JSON file back to the S3 bucket
+        const uploadParams = {
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: process.env.PENDING_APPOINTMENTS_FILE_PATH,
+          Body: JSON.stringify(jsonAppointmentsArray),
+        };
+  
+        await s3.upload(uploadParams).promise();
+      }
+  
+      res.json({ message: 'Appointment Updated' });
+    } catch (err) {
+      console.error('Error updating appointment:', err);
+      res.status(500).json({ error: 'Error updating appointment.' });
+    }
+  });
+
+app.post('/removePendingAppointment', async (req, res) => {
+    try {
+      const { appointmentId } = req.body;
+      let jsonAppointmentsArray = await getJsonFromFile();
+  
+      jsonAppointmentsArray = jsonAppointmentsArray.filter(
+        (obj) => obj.appointmentId !== appointmentId
+      );
+  
+      // Upload the modified JSON file back to the S3 bucket
+      const uploadParams = {
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: process.env,PENDING_APPOINTMENTS_FILE_PATH,
+        Body: JSON.stringify(jsonAppointmentsArray),
+      };
+  
+      await s3.upload(uploadParams).promise();
+  
+      res.json({ message: 'Pending appointment removed successfully.' });
+    } catch (err) {
+      console.error('Error removing pending appointment:', err);
+      res.status(500).json({ error: 'Error removing pending appointment.' });
+    }
+});
+  
 
 /* EIA api call if needed in future. (tracks cost of gasoline in PADD 5 region)
 app.get('/api/eia', async (req, res) => {
