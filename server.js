@@ -63,6 +63,10 @@ app.use(cors());
 
 app.use(bodyParser.json());
 
+app.get('/', (req, res) => {
+    res.send('Default Route');
+})
+
 app.get('/api/places', async (req, res) => {
     const apiKey = process.env.PLACES_API_KEY;
     try {
