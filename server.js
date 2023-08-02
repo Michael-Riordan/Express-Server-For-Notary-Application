@@ -27,13 +27,14 @@ async function getFileFromS3(bucketName, key) {
         Key: key,
     };
 
-    return s3Client.send(new GetObjectCommand(params))
-        .then((data) => {
-            return data.Body;
-        })
-        .catch((err) => {
-            throw err;
-        });
+    try {
+        const data = await s3Client.send(new GetObjectCommand(params));
+        const fileContent = data.Body.toString('utf-8');
+        return JSON.parse(fileContent)
+    } catch (err) {
+        console.error('Error fetching JSON file from S3:', err);
+        throw err;
+    };
 };
 
 async function getJsonFromFile() {
