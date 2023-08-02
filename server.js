@@ -73,7 +73,7 @@ app.get('/api/places', async (req, res) => {
     const apiKey = process.env.PLACES_API_KEY;
     try {
         const query = req.query.query;
-        const response = await axios.get(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${query}&components=country:US&key=${apiKey}`)
+        const response = await axios.get(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${query}&location=33.5387%-112.1860&components=country:US&key=${apiKey}`)
         res.json(response.data);
     } catch (error) {
         console.error(error);
