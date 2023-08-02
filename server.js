@@ -184,7 +184,8 @@ app.get('/api/business-hours', (req, res) => {
     getFileFromS3(bucketName, businessHoursFilePath)
         .then((fileContent) => {
             res.set('Content-Type', 'application/json');
-            res.send(fileContent);
+            const inspectedContent = util.inspect(fileContent, { depth: null, breakLength: Infinity });
+            res.send(inspectedContent);
         })
         .catch((err) => {
             console.error('Error fetching business hours from S3:', err);
