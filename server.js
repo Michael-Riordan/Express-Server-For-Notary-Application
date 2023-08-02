@@ -10,7 +10,6 @@ const path = require('path');
 const fs = require('fs');
 const { isUtf8 } = require('buffer');
 require('dotenv').config();
-const AWS = require('aws-sdk');
 const {S3Client, PutObjectCommand, GetObjectCommand} = require('@aws-sdk/client-s3');
 const PORT = process.env.PORT || 8000;
 
