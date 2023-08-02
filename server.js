@@ -11,6 +11,7 @@ const fs = require('fs');
 const { isUtf8 } = require('buffer');
 require('dotenv').config();
 const AWS = require('aws-sdk');
+const {S3Client, PutObjectCommand, GetObjectCommand} = require('@aws-sdk/client-s3');
 const PORT = process.env.PORT || 8000;
 
 AWS.config.update({
@@ -19,34 +20,43 @@ AWS.config.update({
     region: process.env.S3_BUCKET_REGION,
 });
 
-const s3 = new AWS.S3();
+const s3Client = new S3Client({
+    region: process.env.S3_BUCKET_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.SECRET_ACCESS_KEY,
+    },
+});
 
-function getFileFromS3(bucketName, key) {
+async function getFileFromS3(bucketName, key) {
     const params = {
         Bucket: bucketName,
         Key: key,
     };
 
-    return new Promise((resolve, reject) => {
-        s3.getObject(params, (err, data) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(data.Body);
-            }
+    return s3Client.send(new GetObjectCommand(params))
+        .then((data) => {
+            return data.Body;
+        })
+        .catch((err) => {
+            throw err;
         });
-    });
-}
+};
 
 async function getJsonFromFile() {
+    const params = {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: process.env.BUSINESS_HOURS_FILE_PATH,
+    };
+  
     try {
-        const data = await getFileFromS3(bucketName, objectKey);
-        return JSON.parse(data.toString());
+      const data = await s3Client.send(new GetObjectCommand(params));
+      return JSON.parse(data.Body.toString());
     } catch (err) {
-        console.error('Error fetching JSON file from S3:', err);
-        throw err;
+      console.error("Error fetching JSON file from S3:", err);
+      throw err;
     }
-};
+}
 
 
 function logger(req, res, next) { 
@@ -247,7 +257,7 @@ app.post('/update-hours', async (req, res) => {
             Body: JSON.stringify(jsonArray),
         }
 
-        await s3.upload(uploadParams).promise();
+        await s3Client.send(new PutObjectCommand(uploadParams));
 
         res.json({message: 'Business hours updated successfully'});
     } catch (err) {
@@ -258,7 +268,7 @@ app.post('/update-hours', async (req, res) => {
 
 app.post('/delete-hours', async (req, res) => {
     try {
-        const jsonArray = getJsonFromFile();
+        const jsonArray = await getJsonFromFile();
 
         const {day, time} = req.body;
 
@@ -272,7 +282,7 @@ app.post('/delete-hours', async (req, res) => {
             Body: JSON.stringify(jsonArray),
         }
 
-        await s3.upload(uploadParams).promise();
+        await s3Client.send(new PutObjectCommand(uploadParams));
 
         res.json( {message: 'Business hours updated successfully.'} );
     } catch (err) {
@@ -294,7 +304,7 @@ app.post('/updateBlockedDates', async (req, res) => {
         Body: JSON.stringify(datesArray),
       };
   
-      await s3.upload(uploadParams).promise();
+      await s3Client.send(new PutObjectCommand(uploadParams));
   
       res.json({ message: 'Blocked dates updated successfully.' });
     } catch (err) {
@@ -309,15 +319,14 @@ app.post('/deleteSelectedDates', async (req, res) => {
       const datesArray = await getJsonFromFile();
   
       datesArray[0].Blocked = datesArray[0].Blocked.filter(date => !blockedDates.includes(date));
-  
-      // Upload the modified JSON file back to the S3 bucket
+
       const uploadParams = {
         Bucket: process.env.S3_BUCKET_NAME,
         Key: process.env.BLOCKED_DATES_FILE_PATH,
         Body: JSON.stringify(datesArray),
       };
   
-      await s3.upload(uploadParams).promise();
+      await s3Client.send(new PutObjectCommand(uploadParams));
   
       res.json({ message: 'Selected dates deleted successfully.' });
     } catch (err) {
@@ -331,15 +340,14 @@ app.post('/updateBlockedTime', async (req, res) => {
         const jsonTimesArray = await getJsonFromFile();
     
         jsonTimesArray.push(req.body);
-    
-        // Upload the modified JSON file back to the S3 bucket
+
         const uploadParams = {
           Bucket: process.env.S3_BUCKET_NAME,
           Key: process.env.BLOCKED_TIMES_FILE_PATH,
           Body: JSON.stringify(jsonTimesArray),
         };
     
-        await s3.upload(uploadParams).promise();
+        await s3Client.send(new PutObjectCommand(uploadParams));
         res.json({ message: 'Blocked times and date updated successfully.' });
     } catch (err) {
         console.error('Error updating blocked times for date:', err);
@@ -354,14 +362,13 @@ app.post('/deleteBlockedTime', async (req, res) => {
   
       jsonTimesArray = jsonTimesArray.filter(obj => !(obj.date === date && obj.time === time && obj.buffer === buffer));
   
-      // Upload the modified JSON file back to the S3 bucket
       const uploadParams = {
         Bucket: process.env.S3_BUCKET_NAME,
         Key: process.env.BLOCKED_TIMES_FILE_PATH,
         Body: JSON.stringify(jsonTimesArray),
       };
   
-      await s3.upload(uploadParams).promise();
+      await s3Client.send(new PutObjectCommand(uploadParams));
   
       res.json({ message: 'Blocked time deleted successfully.' });
     } catch (err) {
@@ -381,19 +388,17 @@ app.post('/updatePendingAppointments', async (req, res) => {
   
       if (existingAppointment) {
         console.log('exists');
-        // Do something if the appointment already exists
         return res.json({ message: 'Appointment already exists.' });
       } else {
         jsonAppointmentsArray.push(req.body);
-  
-        // Upload the modified JSON file back to the S3 bucket
+
         const uploadParams = {
           Bucket: process.env.S3_BUCKET_NAME,
           Key: process.env.PENDING_APPOINTMENTS_FILE_PATH,
           Body: JSON.stringify(jsonAppointmentsArray),
         };
   
-        await s3.upload(uploadParams).promise();
+        await s3Client.send(new PutObjectCommand(uploadParams));
       }
   
       res.json({ message: 'Appointment Updated' });
@@ -412,14 +417,13 @@ app.post('/removePendingAppointment', async (req, res) => {
         (obj) => obj.appointmentId !== appointmentId
       );
   
-      // Upload the modified JSON file back to the S3 bucket
       const uploadParams = {
         Bucket: process.env.S3_BUCKET_NAME,
         Key: process.env,PENDING_APPOINTMENTS_FILE_PATH,
         Body: JSON.stringify(jsonAppointmentsArray),
       };
   
-      await s3.upload(uploadParams).promise();
+      await s3Client.send(new PutObjectCommand(uploadParams));
   
       res.json({ message: 'Pending appointment removed successfully.' });
     } catch (err) {
