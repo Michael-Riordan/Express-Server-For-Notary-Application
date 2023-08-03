@@ -239,14 +239,12 @@ app.post('/update-hours', async (req, res) => {
     const bucketName = process.env.S3_BUCKET_NAME;
     const key = process.env.BUSINESS_HOURS_FILE_PATH;
     try {
-        getFileFromS3(bucketName, key)
-            .then((fileContent) => {
-                console.log(fileContent);
-            })
+        const jsonArray = await getFileFromS3(bucketName, key);
 
         const {day, time} = req.body;
 
-        /*const targetObject = jsonArray.find((obj) => obj.hasOwnProperty(day));
+        const targetObject = jsonArray.find((obj) => obj.hasOwnProperty(day));
+        console.log(targetObject);
 
         targetObject[day].push(time);
 
@@ -254,11 +252,11 @@ app.post('/update-hours', async (req, res) => {
             Bucket: bucketName,
             Key: key,
             Body: JSON.stringify(jsonArray),
-        }*/
+        }
 
-        //await s3Client.send(new PutObjectCommand(uploadParams));
+        await s3Client.send(new PutObjectCommand(uploadParams));
 
-        //res.json({message: 'Business hours updated successfully'});
+        res.json({message: 'Business hours updated successfully'});
     } catch (err) {
         console.error('Error updating business hours:', err);
         res.status(500).json({error: 'Error updating business hours.'})
