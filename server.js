@@ -113,6 +113,7 @@ app.get('/appointments', (req, res) => {
         if (err) {
             console.log(err)
         } else {
+            console.log(response);
             res.send(response);
         }
     })
