@@ -283,7 +283,7 @@ app.post('/delete-hours', async (req, res) => {
 
         await s3Client.send(new PutObjectCommand(uploadParams));
 
-        res.json( {message: 'Business hours updated successfully.'} );
+        res.json(jsonArray);
     } catch (err) {
         console.error('Error updating business hours:', err);
         res.status(500).json({error: 'Error updating business hours.'});
@@ -308,7 +308,7 @@ app.post('/updateBlockedDates', async (req, res) => {
   
       await s3Client.send(new PutObjectCommand(uploadParams));
   
-      res.json({ message: 'Blocked dates updated successfully.' });
+      res.json(datesArray);
     } catch (err) {
       console.error('Error updating blocked dates:', err);
       res.status(500).json({ error: 'Error updating blocked dates.' });
@@ -333,7 +333,7 @@ app.post('/deleteSelectedDates', async (req, res) => {
   
       await s3Client.send(new PutObjectCommand(uploadParams));
   
-      res.json({ message: 'Selected dates deleted successfully.' });
+      res.json(datesArray);
     } catch (err) {
       console.error('Error deleting selected dates:', err);
       res.status(500).json({ error: 'Error deleting selected dates.' });
@@ -360,7 +360,7 @@ app.post('/updateBlockedTime', async (req, res) => {
         };
     
         await s3Client.send(new PutObjectCommand(uploadParams));
-        res.json({ message: 'Blocked times and date updated successfully.' });
+        res.json(jsonTimesArray);
     } catch (err) {
         console.error('Error updating blocked times for date:', err);
         res.status(500).json({ error: 'Error updating blocked times for date.'})
@@ -385,7 +385,7 @@ app.post('/deleteBlockedTime', async (req, res) => {
   
       await s3Client.send(new PutObjectCommand(uploadParams));
   
-      res.json({ message: 'Blocked time deleted successfully.' });
+      res.json(jsonTimesArray);
     } catch (err) {
       console.error('Error deleting blocked time:', err);
       res.status(500).json({ error: 'Error deleting blocked time.' });
@@ -419,7 +419,7 @@ app.post('/updatePendingAppointments', async (req, res) => {
         await s3Client.send(new PutObjectCommand(uploadParams));
       }
   
-      res.json({ message: 'Appointment Updated' });
+      res.json(jsonAppointmentsArray);
     } catch (err) {
       console.error('Error updating appointment:', err);
       res.status(500).json({ error: 'Error updating appointment.' });
@@ -446,7 +446,7 @@ app.post('/removePendingAppointment', async (req, res) => {
   
       await s3Client.send(new PutObjectCommand(uploadParams));
   
-      res.json({ message: 'Pending appointment removed successfully.' });
+      res.json(jsonAppointmentsArray);
     } catch (err) {
       console.error('Error removing pending appointment:', err);
       res.status(500).json({ error: 'Error removing pending appointment.' });
