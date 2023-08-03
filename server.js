@@ -244,9 +244,10 @@ app.post('/update-hours', async (req, res) => {
         const {day, time} = req.body;
 
         const targetObject = jsonArray.find((obj) => obj.hasOwnProperty(day));
-        console.log(targetObject);
 
         targetObject[day].push(time);
+        console.log(targetObject);
+        console.log(jsonArray);
 
         const uploadParams = {
             Bucket: bucketName,
