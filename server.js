@@ -212,7 +212,6 @@ app.get('/api/blocked-dates', (req, res) => {
 
     getFileFromS3(bucketName, blockedDatesFilePath)
         .then((fileContent) => {
-            console.log(fileContent);
             res.set('Content-Type', 'application/json');
             res.send(fileContent);
         })
@@ -228,6 +227,7 @@ app.get('/api/blocked-time-for-date', (req, res) => {
 
     getFileFromS3(bucketName, blockedTimesFilePath)
         .then((fileContent) => {
+            console.log(fileContent);
             res.set('Content-Type', 'application/json');
             res.send(fileContent);
         })
@@ -243,6 +243,7 @@ app.get('/api/pending-appointments', (req, res) => {
 
     getFileFromS3(bucketName, pendingAppointmentsFilePath)
         .then((fileContent) => {
+            console.log(fileContent);
             res.set('Content-Type', 'application/json');
             res.send(fileContent);
         })
@@ -257,6 +258,7 @@ app.post('/update-hours', async (req, res) => {
     const key = process.env.BUSINESS_HOURS_FILE_PATH;
     try {
         const jsonArray = await getFileFromS3(bucketName, key);
+        console.log(jsonArray);
 
         const {day, time} = req.body;
 
