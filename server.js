@@ -13,7 +13,6 @@ require('dotenv').config();
 const {S3Client, PutObjectCommand, GetObjectCommand} = require('@aws-sdk/client-s3');
 const PORT = process.env.PORT || 8000;
 
-
 const s3Client = new S3Client({
     region: process.env.S3_BUCKET_REGION,
     credentials: {
@@ -281,8 +280,11 @@ app.post('/update-hours', async (req, res) => {
 });
 
 app.post('/delete-hours', async (req, res) => {
+    const bucketName = process.env.S3_BUCKET_NAME;
+    const key = process.env.BUSINESS_HOURS_FILE_PATH
     try {
-        const jsonArray = await getJsonFromFile();
+        const jsonArray = await getFileFromS3(bucketName, key);
+        console.log(jsonArray);
 
         const {day, time} = req.body;
 
@@ -306,9 +308,12 @@ app.post('/delete-hours', async (req, res) => {
 })
 
 app.post('/updateBlockedDates', async (req, res) => {
+    const bucketName = process.env.S3_BUCKET_NAME;
+    const key = process.env.BLOCKED_DATES_FILE_PATH;
+
     try {
       const { blockedDates } = req.body;
-      const datesArray = await getJsonFromFile();
+      const datesArray = await getFileFromS3(bucketName, key);
   
       datesArray[0].Blocked = datesArray[0].Blocked.concat(blockedDates);
   
@@ -328,9 +333,12 @@ app.post('/updateBlockedDates', async (req, res) => {
 });
 
 app.post('/deleteSelectedDates', async (req, res) => {
+    const bucketName = process.env.S3_BUCKET_NAME;
+    const key = process.env.BLOCKED_DATES_FILE_PATH;
+
     try {
       const { blockedDates } = req.body;
-      const datesArray = await getJsonFromFile();
+      const datesArray = await getFileFromS3(bucketName, key);
   
       datesArray[0].Blocked = datesArray[0].Blocked.filter(date => !blockedDates.includes(date));
 
@@ -350,8 +358,11 @@ app.post('/deleteSelectedDates', async (req, res) => {
 });
 
 app.post('/updateBlockedTime', async (req, res) => {
+    const bucketName = process.env.S3_BUCKET_NAME;
+    const key = process.env.BLOCKED_TIMES_FILE_PATH;
+
     try {
-        const jsonTimesArray = await getJsonFromFile();
+        const jsonTimesArray = await getFileFromS3(bucketName, key);
     
         jsonTimesArray.push(req.body);
 
@@ -370,9 +381,12 @@ app.post('/updateBlockedTime', async (req, res) => {
 });
 
 app.post('/deleteBlockedTime', async (req, res) => {
+    const bucketName = process.env.S3_BUCKET_NAME;
+    const key = process.env.BLOCKED_TIMES_FILE_PATH;
+
     try {
       const { date, time, buffer } = req.body;
-      let jsonTimesArray = await getJsonFromFile();
+      let jsonTimesArray = await getFileFromS3(bucketName, key);
   
       jsonTimesArray = jsonTimesArray.filter(obj => !(obj.date === date && obj.time === time && obj.buffer === buffer));
   
@@ -393,8 +407,11 @@ app.post('/deleteBlockedTime', async (req, res) => {
   
 
 app.post('/updatePendingAppointments', async (req, res) => {
+    const bucketName = process.env.S3_BUCKET_NAME;
+    const key = process.env.PENDING_APPOINTMENTS_FILE_PATH;
+
     try {
-      const jsonAppointmentsArray = await getJsonFromFile();
+      const jsonAppointmentsArray = await getFileFromS3(bucketName, key);
   
       const existingAppointment = jsonAppointmentsArray.find(
         (appointment) => appointment.appointmentId === req.body.appointmentId
@@ -423,9 +440,12 @@ app.post('/updatePendingAppointments', async (req, res) => {
   });
 
 app.post('/removePendingAppointment', async (req, res) => {
+    const bucketName = process.env.S3_BUCKET_NAME;
+    const key = process.env.PENDING_APPOINTMENTS_FILE_PATH;
+    
     try {
       const { appointmentId } = req.body;
-      let jsonAppointmentsArray = await getJsonFromFile();
+      let jsonAppointmentsArray = await getFileFromS3(bucketName, key);
   
       jsonAppointmentsArray = jsonAppointmentsArray.filter(
         (obj) => obj.appointmentId !== appointmentId
