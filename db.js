@@ -3,7 +3,7 @@ require('dotenv').config();
 
 const connectionPool = mysql.createPool({
     connectionLimit: 5,
-    host: `${process.env.PROXIMO_URL}`,
+    host: `${process.env.AMAZON_RDS_ENDPOINT}`,
     user: `${process.env.RDS_USERNAME}`,
     password: `${process.env.MYSQL_PASSWORD}`,
     database: 'notaryappointmentmanager',

@@ -227,7 +227,6 @@ app.get('/api/blocked-time-for-date', (req, res) => {
 
     getFileFromS3(bucketName, blockedTimesFilePath)
         .then((fileContent) => {
-            console.log(fileContent);
             res.set('Content-Type', 'application/json');
             res.send(fileContent);
         })
@@ -243,7 +242,6 @@ app.get('/api/pending-appointments', (req, res) => {
 
     getFileFromS3(bucketName, pendingAppointmentsFilePath)
         .then((fileContent) => {
-            console.log(fileContent);
             res.set('Content-Type', 'application/json');
             res.send(fileContent);
         })
