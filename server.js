@@ -49,22 +49,6 @@ async function getFileFromS3(bucketName, key) {
     };
 };
 
-/*async function getJsonFromFile(bucketName, key) {
-    const params = {
-      Bucket: process.env.S3_BUCKET_NAME,
-      Key: process.env.BUSINESS_HOURS_FILE_PATH,
-    };
-  
-    try {
-      const data = await s3Client.send(new GetObjectCommand(params));
-      return JSON.parse(data.Body.toString());
-    } catch (err) {
-      console.error("Error fetching JSON file from S3:", err);
-      throw err;
-    }
-}*/
-
-
 function logger(req, res, next) { 
     console.log(`[${Date.now()}] ${req.method} ${req.url}`);
     next();
@@ -362,7 +346,11 @@ app.post('/updateBlockedTime', async (req, res) => {
     const key = process.env.BLOCKED_TIMES_FILE_PATH;
 
     try {
-        const jsonTimesArray = await getFileFromS3(bucketName, key);
+        getFileFromS3(bucketName, key)
+            .then((fileContent) => {
+                const jsonArray = fileContent;
+                console.log(jsonArray);
+            })
     
         jsonTimesArray.push(req.body);
 
@@ -442,7 +430,7 @@ app.post('/updatePendingAppointments', async (req, res) => {
 app.post('/removePendingAppointment', async (req, res) => {
     const bucketName = process.env.S3_BUCKET_NAME;
     const key = process.env.PENDING_APPOINTMENTS_FILE_PATH;
-    
+
     try {
       const { appointmentId } = req.body;
       let jsonAppointmentsArray = await getFileFromS3(bucketName, key);
