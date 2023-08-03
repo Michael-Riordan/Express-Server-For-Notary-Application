@@ -30,15 +30,18 @@ async function getFileFromS3(bucketName, key) {
 
     try {
         const data = await s3Client.send(new GetObjectCommand(params));
+        /* 
+            data variable is an 'IncomingMessage' object - data.Body is a readable stream of response data.
+            The stream is read and concatenated into a string (JSON file contents).
+        */
+
         const body = await new Promise((resolve, reject) => {
             const chunks = [];
             data.Body.on('data', (chunk) => chunks.push(chunk));
             data.Body.on('end', () => resolve(Buffer.concat(chunks).toString()));
             data.Body.on('error', reject);
         });
-        console.log(body);
-        //const fileContent = data.Body.toString();
-        //return JSON.parse(fileContent)
+        return JSON.parse(body);
     } catch (err) {
         console.error('Error fetching JSON file from S3:', err);
         throw err;
@@ -192,6 +195,7 @@ app.get('/api/business-hours', (req, res) => {
 
     getFileFromS3(bucketName, businessHoursFilePath)
         .then((fileContent) => {
+            console.log(fileContent);
             res.set('Content-Type', 'application/json');
             res.send(fileContent);
         })
