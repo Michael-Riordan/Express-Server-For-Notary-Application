@@ -30,8 +30,8 @@ async function getFileFromS3(bucketName, key) {
 
     try {
         const data = await s3Client.send(new GetObjectCommand(params));
+        console.log(data);
         const fileContent = data.Body.toString();
-        console.log(fileContent);
         return JSON.parse(fileContent)
     } catch (err) {
         console.error('Error fetching JSON file from S3:', err);
