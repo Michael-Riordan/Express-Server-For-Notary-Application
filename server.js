@@ -256,9 +256,9 @@ app.post('/update-hours', async (req, res) => {
             Body: JSON.stringify(jsonArray),
         }*/
 
-        await s3Client.send(new PutObjectCommand(uploadParams));
+        //await s3Client.send(new PutObjectCommand(uploadParams));
 
-        res.json({message: 'Business hours updated successfully'});
+        //res.json({message: 'Business hours updated successfully'});
     } catch (err) {
         console.error('Error updating business hours:', err);
         res.status(500).json({error: 'Error updating business hours.'})
