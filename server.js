@@ -32,7 +32,9 @@ async function getFileFromS3(bucketName, key) {
         const data = await s3Client.send(new GetObjectCommand(params));
         /* 
             data variable is an 'IncomingMessage' object - data.Body is a readable stream of response data.
-            The stream is read and concatenated into a string (JSON file contents).
+            The stream is sent in data chunks;
+            The chunks are read and concatenated into a string (JSON file contents) and converted to string;
+            chunks array is then parsed and returned to client as JSON;
         */
 
         const body = await new Promise((resolve, reject) => {
@@ -195,7 +197,6 @@ app.get('/api/business-hours', (req, res) => {
 
     getFileFromS3(bucketName, businessHoursFilePath)
         .then((fileContent) => {
-            console.log(fileContent);
             res.set('Content-Type', 'application/json');
             res.send(fileContent);
         })
@@ -205,13 +206,13 @@ app.get('/api/business-hours', (req, res) => {
         });
 })
 
-/*
 app.get('/api/blocked-dates', (req, res) => {
     const bucketName = process.env.S3_BUCKET_NAME;
     const blockedDatesFilePath = process.env.BLOCKED_DATES_FILE_PATH;
 
     getFileFromS3(bucketName, blockedDatesFilePath)
         .then((fileContent) => {
+            console.log(fileContent);
             res.set('Content-Type', 'application/json');
             res.send(fileContent);
         })
