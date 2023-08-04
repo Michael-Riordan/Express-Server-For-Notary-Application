@@ -127,6 +127,7 @@ app.delete('/deleteAppointment/:appointmentId', (req, res) => {
 app.put('/updateAppointment/:appointmentId', (req, res) => {
     const appointmentId = req.params.appointmentId;
     const newStatus = req.body.status;
+    console.log(req);
 
     const updateQuery = 'UPDATE appointments SET status = ? WHERE appointmentid = ?';
 
