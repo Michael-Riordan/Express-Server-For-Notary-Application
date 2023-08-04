@@ -439,8 +439,8 @@ app.post('/removePendingAppointment', async (req, res) => {
       );
   
       const uploadParams = {
-        Bucket: process.env.S3_BUCKET_NAME,
-        Key: process.env,PENDING_APPOINTMENTS_FILE_PATH,
+        Bucket: bucketName,
+        Key: key,
         Body: JSON.stringify(jsonAppointmentsArray),
       };
   
