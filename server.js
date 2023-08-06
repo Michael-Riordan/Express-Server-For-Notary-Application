@@ -95,6 +95,22 @@ app.get('/api/distance', async (req, res) => {
     }
 });
 
+app.delete('/deleteAppointment/:appointmentId', async (req, res) => {
+    try {
+        const DELETE_QUERY = `DELETE FROM notaryappointmentmanager.appointments where (appointmentId=${req.params.appointmentId})`;
+        const result = await queryAsync(DELETE_QUERY);
+
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: 'Appointment deleted successfully' });
+        } else {
+            res.status(404).json({ error: 'Appointment not found' });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 app.get('/appointments', (req, res) => {
     const APPOINTMENT_QUERY = "select * from notaryappointmentmanager.appointments"
     connectionPool.query(APPOINTMENT_QUERY, (err, response) => {
@@ -118,21 +134,6 @@ app.post('/addAppointment', (req, res) => {
     })
 })
 
-app.delete('/deleteAppointment/:appointmentId', async (req, res) => {
-    try {
-        const DELETE_QUERY = `DELETE FROM notaryappointmentmanager.appointments where (appointmentId=${req.params.appointmentId})`;
-        const result = await queryAsync(DELETE_QUERY);
-
-        if (result.affectedRows > 0) {
-            res.status(200).json({ message: 'Appointment deleted successfully' });
-        } else {
-            res.status(404).json({ error: 'Appointment not found' });
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
 
 app.put('/updateAppointment/:appointmentId', (req, res) => {
     const appointmentId = req.params.appointmentId;
