@@ -57,7 +57,7 @@ function logger(req, res, next) {
 app.use(logger);
 
 app.use(cors({
-    origin: '*',
+    origin: 'https://lr-mobilenotary.com',
 }));
 
 app.use(bodyParser.json());
