@@ -111,16 +111,15 @@ app.delete('/deleteAppointment/:appointmentId', async (req, res) => {
     }
 });
 
-app.get('/appointments', (req, res) => {
-    const APPOINTMENT_QUERY = "select * from notaryappointmentmanager.appointments"
-    connectionPool.query(APPOINTMENT_QUERY, (err, response) => {
-        if (err) {
-            console.log(err)
-        } else {
-            console.log(response);
-            res.send(response);
-        }
-    })
+app.get('/appointments', async (req, res) => {
+    try {
+        const APPOINTMENT_QUERY = "select * from notaryappointmentmanager.appointments"
+        const response = await queryAsync(APPOINTMENT_QUERY);
+        res.send(response);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    };
 })
 
 app.post('/addAppointment', (req, res) => {
