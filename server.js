@@ -1,4 +1,5 @@
 const express = require('express');
+const util = require('util');
 const axios = require('axios');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -21,6 +22,9 @@ function logger(req, res, next) {
     console.log(`[${Date.now()}] ${req.method} ${req.url}`);
     next();
 }
+
+const queryAsync = util.promisify(connectionPool.query).bind(connectionPool);
+
 
 app.use(logger);
 
@@ -114,15 +118,20 @@ app.post('/addAppointment', (req, res) => {
     })
 })
 
-app.delete('/deleteAppointment/:appointmentId', (req, res) => {
-    const DELETE_QUERY = `DELETE FROM notaryappointmentmanager.appointments where (appointmentId=${req.params.appointmentId})`;
-    connectionPool.query(DELETE_QUERY, (err, res) => {
-        if (err) {
-            console.log(req.params.appointmentId);
+app.delete('/deleteAppointment/:appointmentId', async (req, res) => {
+    try {
+        const DELETE_QUERY = `DELETE FROM notaryappointmentmanager.appointments where (appointmentId=${req.params.appointmentId})`;
+        const result = await queryAsync(DELETE_QUERY);
+
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: 'Appointment deleted successfully' });
         } else {
-            console.log(res);
+            res.status(404).json({ error: 'Appointment not found' });
         }
-    });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 });
 
 app.put('/updateAppointment/:appointmentId', (req, res) => {
