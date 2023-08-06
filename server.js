@@ -13,6 +13,19 @@ require('dotenv').config();
 const {S3Client, PutObjectCommand, GetObjectCommand} = require('@aws-sdk/client-s3');
 const PORT = process.env.PORT || 8000;
 
+app.use(cors({
+    origin: 'https://lr-mobilenotary.com'
+}));
+
+function logger(req, res, next) { 
+    console.log(`[${Date.now()}] ${req.method} ${req.url}`);
+    next();
+}
+
+app.use(logger);
+
+app.use(bodyParser.json());
+
 const s3Client = new S3Client({
     region: process.env.S3_BUCKET_REGION,
     credentials: {
@@ -49,18 +62,6 @@ async function getFileFromS3(bucketName, key) {
     };
 };
 
-function logger(req, res, next) { 
-    console.log(`[${Date.now()}] ${req.method} ${req.url}`);
-    next();
-}
-
-app.use(logger);
-
-app.use(cors({
-    origin: 'https://lr-mobilenotary.com',
-}));
-
-app.use(bodyParser.json());
 
 app.get('/', (req, res) => {
     res.send('Default Route');
