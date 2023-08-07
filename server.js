@@ -102,7 +102,11 @@ app.get('/api/distance', async (req, res) => {
     }
 });
 
+let deleting = false;
+
 app.delete('/deleteAppointment/:appointmentId', async (req, res) => {
+    deleting = true;
+    console.log(deleting);
     try {
         const DELETE_QUERY = `DELETE FROM notaryappointmentmanager.appointments where (appointmentId=${req.params.appointmentId})`;
         const result = await queryAsync(DELETE_QUERY);
@@ -116,16 +120,19 @@ app.delete('/deleteAppointment/:appointmentId', async (req, res) => {
         console.error('Error:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
+    deleting = false;
 });
 
 app.get('/appointments', async (req, res) => {
-    try {
-        const APPOINTMENT_QUERY = "select * from notaryappointmentmanager.appointments"
-        const response = await queryAsync(APPOINTMENT_QUERY);
-        res.send(response);
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+    if (deleting === false) {
+        try {
+            const APPOINTMENT_QUERY = "select * from notaryappointmentmanager.appointments"
+            const response = await queryAsync(APPOINTMENT_QUERY);
+            res.send(response);
+        } catch (error) {
+            console.error('Error:', error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        };
     };
 })
 
