@@ -23,7 +23,14 @@ function logger(req, res, next) {
     next();
 }
 
-const queryAsync = util.promisify(connectionPool.query).bind(connectionPool);
+const queryAsync = (query, values) => {
+    return new Promise((resolve, reject) => {
+        connectionPool.query(query, values, (err, result) => {
+            if (err) reject (err);
+            else resolve(result);
+        });
+    });
+};
 
 
 app.use(logger);
