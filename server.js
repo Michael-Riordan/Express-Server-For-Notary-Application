@@ -15,7 +15,7 @@ const {S3Client, PutObjectCommand, GetObjectCommand} = require('@aws-sdk/client-
 const PORT = process.env.PORT || 8000;
 
 app.use(cors({
-    origin: ['https://lr-mobilenotary.com', 'https://main--stunning-cendol-efa88e.netlify.app']
+    origin: ['https://lr-mobilenotary.com', 'https://stunning-cendol-efa88e.netlify.app']
 }));
 
 function logger(req, res, next) { 
