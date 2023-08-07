@@ -106,7 +106,7 @@ let deleting = false;
 
 app.delete('/deleteAppointment/:appointmentId', async (req, res) => {
     deleting = true;
-    console.log(deleting);
+    console.log('delete query called');
     try {
         const DELETE_QUERY = `DELETE FROM notaryappointmentmanager.appointments where (appointmentId=${req.params.appointmentId})`;
         const result = await queryAsync(DELETE_QUERY);
@@ -124,6 +124,7 @@ app.delete('/deleteAppointment/:appointmentId', async (req, res) => {
 });
 
 app.get('/appointments', async (req, res) => {
+    console.log('appointment query called');
     if (deleting === false) {
         try {
             const APPOINTMENT_QUERY = "select * from notaryappointmentmanager.appointments"
