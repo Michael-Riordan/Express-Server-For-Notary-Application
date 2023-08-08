@@ -371,22 +371,18 @@ app.post('/updateBlockedTime', async (req, res) => {
     const key = process.env.BLOCKED_TIMES_FILE_PATH;
 
     try {
-        getFileFromS3(bucketName, key)
-            .then((fileContent) => {
-                const jsonArray = fileContent;
-                console.log(jsonArray);
-            })
+        const jsonTimesArray = await getFileFromS3(bucketName, key);
     
-        jsonArray.push(req.body);
+        jsonTimesArray.push(req.body);
 
         const uploadParams = {
           Bucket: process.env.S3_BUCKET_NAME,
           Key: process.env.BLOCKED_TIMES_FILE_PATH,
-          Body: JSON.stringify(jsonArray),
+          Body: JSON.stringify(jsonTimesArray),
         };
     
         await s3Client.send(new PutObjectCommand(uploadParams));
-        res.json(jsonArray);
+        res.json(jsonTimesArray);
     } catch (err) {
         console.error('Error updating blocked times for date:', err);
         res.status(500).json({ error: 'Error updating blocked times for date.'})
