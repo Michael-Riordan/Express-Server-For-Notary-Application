@@ -152,7 +152,7 @@ app.post('/addAppointment', (req, res) => {
 app.put('/updateAppointment/:appointmentId', (req, res) => {
     const appointmentId = req.params.appointmentId;
     const newStatus = req.body.status;
-    console.log(req.body.status, req.body.appointmentId);
+    console.log(req.body.status, req.params.appointmentId);
 
     const updateQuery = 'UPDATE appointments SET status = ? WHERE appointmentid = ?';
 
